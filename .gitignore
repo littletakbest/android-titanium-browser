@@ -1,7 +1,7 @@
 .DS_Store
 
-chromium/
-depot_tools/
+/chromium/
+/depot_tools/
 extensions/dist/
 keys/
 
