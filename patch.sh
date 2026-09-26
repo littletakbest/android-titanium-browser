@@ -237,4 +237,9 @@ sed -i "/<message name=\"IDS_PAGE_INFO_SECURITY_TAB_SSL_VERSION\"/,/<\/message>/
 /<\/message>/r $SCRIPT_DIR/net_settings/page_info_strings.grdp.inc
 }" components/page_info_strings.grdp
 
+
+# desktop: always request the desktop site on the Chrome Web Store (it refuses installs from mobile UAs)
+sed -i 's|^  // RDS External Display support.$|  // Titanium: the Chrome Web Store only allows installs from desktop user agents.\n  desktop_mode \|= url.DomainIs("chromewebstore.google.com");\n\n&|' chrome/browser/content_settings/request_desktop_site_web_contents_observer_android.cc
+sed -i '/public static boolean shouldOverrideDesktopSite($/,/^    }$/ s|^        // For --request-desktop-sites, always override the user agent.$|        // Titanium: the Chrome Web Store only allows installs from desktop user agents.\n        if (url != null \&\& url.domainIs("chromewebstore.google.com")) return true;\n\n&|' chrome/browser/ui/android/desktop_site/java/src/org/chromium/chrome/browser/desktop_site/DesktopSiteUtils.java
+
 export PATCHED=1
