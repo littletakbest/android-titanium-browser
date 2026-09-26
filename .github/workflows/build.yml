@@ -7,7 +7,7 @@ on:
         description: 'Runner'
         required: true
         type: string
-        default: 'self-hosted' # ubuntu-latest
+        default: 'ubuntu-latest' # ubuntu-latest
   schedule:
     - cron: '0 0 */16 * *'
 
