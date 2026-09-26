@@ -1,0 +1,59 @@
+# Titanium: ECH toggle + custom proxy settings. Copied into
+# //titanium/chromium_src/chrome/browser/net_settings/android by patch.sh.
+import("//build/config/android/rules.gni")
+import("//third_party/jni_zero/jni_zero.gni")
+
+source_set("net_settings") {
+  sources = [ "net_settings_bridge.cc" ]
+  deps = [
+    ":jni_headers",
+    "//base",
+    "//chrome/browser/profiles:profile",
+    "//components/prefs",
+    "//components/proxy_config",
+    "//net",
+  ]
+  public_deps = [ "//chrome/browser:browser_public_dependencies" ]
+}
+
+generate_jni("jni_headers") {
+  sources = [ "java/src/org/chromium/chrome/browser/net_settings/NetSettingsBridge.java" ]
+}
+
+android_library("java") {
+  srcjar_deps = [ ":jni_headers" ]
+  sources = [
+    "java/src/org/chromium/chrome/browser/net_settings/NetPrivacySettings.java",
+    "java/src/org/chromium/chrome/browser/net_settings/NetSettingsBridge.java",
+    "java/src/org/chromium/chrome/browser/net_settings/ProxySettings.java",
+  ]
+  deps = [
+    ":resources",
+    "//base:base_java",
+    "//base:supplier_java",
+    "//build/android:build_java",
+    "//chrome/browser/prefs/android:java",
+    "//chrome/browser/profiles/android:java",
+    "//chrome/browser/settings:java",
+    "//components/browser_ui/settings/android:java",
+    "//components/browser_ui/widget/android:java",
+    "//components/prefs/android:java",
+    "//third_party/androidx:androidx_appcompat_appcompat_java",
+    "//third_party/androidx:androidx_preference_preference_java",
+    "//third_party/jni_zero:jni_zero_java",
+  ]
+  resources_package = "org.chromium.chrome"
+}
+
+android_resources("resources") {
+  sources = [
+    "java/res/values/dimens.xml",
+    "java/res/xml/net_privacy_preferences.xml",
+    "java/res/xml/proxy_preferences.xml",
+  ]
+  deps = [
+    "//chrome/browser/ui/android/strings:ui_strings_grd",
+    "//components/browser_ui/settings/android:java_resources",
+    "//components/browser_ui/widget/android:java_resources",
+  ]
+}

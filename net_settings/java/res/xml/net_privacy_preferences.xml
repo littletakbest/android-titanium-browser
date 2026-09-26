@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <org.chromium.components.browser_ui.settings.ChromeSwitchPreference
+        android:key="encrypted_client_hello"
+        android:title="@string/encrypted_client_hello_title"
+        android:summary="@string/encrypted_client_hello_summary"
+        android:persistent="false"/>
+    <org.chromium.components.browser_ui.settings.ChromeBasePreference
+        android:key="custom_proxy"
+        android:title="@string/custom_proxy_title"
+        android:fragment="org.chromium.chrome.browser.net_settings.ProxySettings"/>
+</PreferenceScreen>

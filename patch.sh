@@ -212,4 +212,29 @@ sed -i '0,/^\[$/{/^\[$/a\
   { "name": "proxy-server", "owners": [ "jqssun" ], "expiry_milestone": -1 },
 }' chrome/browser/flag-metadata.json
 
+
+# net: settings UI for ECH + proxy (sources in $SCRIPT_DIR/net_settings)
+NET_SETTINGS=titanium/chromium_src/chrome/browser/net_settings/android
+mkdir -p $NET_SETTINGS
+cp -r $SCRIPT_DIR/net_settings/BUILD.gn $SCRIPT_DIR/net_settings/net_settings_bridge.cc $SCRIPT_DIR/net_settings/java $NET_SETTINGS/
+sed -i 's|  "//titanium/chromium_src/chrome/browser/webrtc/android:webrtc_settings_java",|&\n  "//titanium/chromium_src/chrome/browser/net_settings/android:java",|' titanium/chromium_src/chrome/android/chrome_java_ext_deps.gni
+sed -i 's|  "//titanium/chromium_src/chrome/browser/flags/ext/android:features",|&\n  "//titanium/chromium_src/chrome/browser/net_settings/android:net_settings",|' titanium/chromium_src/chrome/browser/android/android_cc_ext_deps.gni
+sed -i "/^<\/grit-part>/{
+r $SCRIPT_DIR/net_settings/android_strings.grdp.inc
+d
+}" titanium/chromium_src/chrome/browser/ui/android/strings/android_chrome_ext_strings.grdp
+echo '</grit-part>' >> titanium/chromium_src/chrome/browser/ui/android/strings/android_chrome_ext_strings.grdp
+sed -i 's|SettingsUtils.addPreferencesFromResource(prefFragment, R.xml.privacy_preferences_ext);|&\n        org.chromium.chrome.browser.net_settings.NetPrivacySettings.initializePreferences(prefFragment, profile, PRIVACY_PREFERENCES_ORDER);|' titanium/chromium_src/chrome/android/java/src/org/chromium/chrome/browser/privacy/settings/PrivacySettingsExt.java
+sed -i 's|static void updatePreferences(PreferenceFragmentCompat prefFragment, Profile profile) {|&\n        org.chromium.chrome.browser.net_settings.NetPrivacySettings.updatePreferences(prefFragment, profile);|' titanium/chromium_src/chrome/android/java/src/org/chromium/chrome/browser/privacy/settings/PrivacySettingsExt.java
+
+# page info: show whether ECH was used (net::SSLInfo -> content::SSLStatus -> VisibleSecurityState)
+sed -i 's|^  bool pkp_bypassed;$|&\n  // Titanium: true if the connection negotiated Encrypted Client Hello.\n  bool encrypted_client_hello = false;|' content/public/browser/ssl_status.h
+sed -i 's|pkp_bypassed(ssl_info.pkp_bypassed) {}|pkp_bypassed(ssl_info.pkp_bypassed),\n      encrypted_client_hello(ssl_info.encrypted_client_hello) {}|' content/public/browser/ssl_status.cc
+sed -i 's|^  uint16_t peer_signature_algorithm;$|&\n  // Titanium: true if the connection negotiated Encrypted Client Hello.\n  bool encrypted_client_hello = false;|' components/security_state/core/security_state.h
+sed -i 's|^  state->peer_signature_algorithm = ssl.peer_signature_algorithm;$|&\n  state->encrypted_client_hello = ssl.encrypted_client_hello;|' components/security_state/content/content_utils.cc
+sed -i 's|IDS_PAGE_INFO_SECURITY_TAB_SSL_VERSION, ASCIIToUTF16(ssl_version_str));|&\n    site_connection_details_ += u"\\n\\n";\n    site_connection_details_ += l10n_util::GetStringUTF16(\n        visible_security_state.encrypted_client_hello\n            ? IDS_PAGE_INFO_SECURITY_TAB_ECH_ACCEPTED\n            : IDS_PAGE_INFO_SECURITY_TAB_ECH_NOT_USED);|' components/page_info/page_info.cc
+sed -i "/<message name=\"IDS_PAGE_INFO_SECURITY_TAB_SSL_VERSION\"/,/<\/message>/{
+/<\/message>/r $SCRIPT_DIR/net_settings/page_info_strings.grdp.inc
+}" components/page_info_strings.grdp
+
 export PATCHED=1

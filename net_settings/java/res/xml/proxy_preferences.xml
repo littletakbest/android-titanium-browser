@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <org.chromium.components.browser_ui.settings.ChromeSwitchPreference
+        android:key="proxy_enabled"
+        android:title="@string/custom_proxy_enable_title"
+        android:summary="@string/custom_proxy_enable_summary"
+        android:persistent="false"/>
+    <org.chromium.components.browser_ui.settings.ChromeBasePreference
+        android:key="proxy_server"
+        android:title="@string/custom_proxy_server_title"
+        android:persistent="false"/>
+    <org.chromium.components.browser_ui.settings.ChromeBasePreference
+        android:key="proxy_bypass_list"
+        android:title="@string/custom_proxy_bypass_title"
+        android:persistent="false"/>
+    <org.chromium.components.browser_ui.settings.TextMessagePreference
+        android:key="proxy_managed"
+        android:summary="@string/custom_proxy_summary_managed"
+        android:persistent="false"/>
+    <org.chromium.components.browser_ui.settings.TextMessagePreference
+        android:key="proxy_help"
+        android:summary="@string/custom_proxy_help"
+        android:persistent="false"/>
+</PreferenceScreen>
