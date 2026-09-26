@@ -161,4 +161,51 @@ if (content::WebContents::HasLiveWebContentsForBrowserContext(profile)) { return
 sed -i 's/|| mSupportedProfileType == SupportedProfileType.REGULAR) {/|| mSupportedProfileType == SupportedProfileType.REGULAR || mSupportedProfileType == SupportedProfileType.MIXED) {/' chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 sed -i 's/|| mSupportedProfileType == SupportedProfileType.OFF_THE_RECORD) {/|| mSupportedProfileType == SupportedProfileType.OFF_THE_RECORD || mSupportedProfileType == SupportedProfileType.MIXED) {/' chrome/android/java/src/org/chromium/chrome/browser/ChromeTabbedActivity.java
 
+# autofill: with server communication disabled, predictions never arrive from the autofill server, so no prefill request is sent and platform autofill services (e.g. Google Password Manager) wait on AUTOFILL_HINTS_SERVICE for types that never come; treat local heuristics as final
+sed -i 's|#include "components/autofill/core/common/form_field_data.h"|#include "base/feature_list.h"\n#include "components/autofill/core/common/autofill_debug_features.h"\n&|' components/android_autofill/browser/android_autofill_manager.cc
+sed -i '/^void AndroidAutofillManager::OnFieldTypesDetermined($/,/^}$/ s|^  switch (source) {$|  if (source == FieldTypeSource::kHeuristicsOrAutocomplete \&\& !base::FeatureList::IsEnabled(features::debug::kAutofillServerCommunication)) { source = FieldTypeSource::kAutofillServer; }\n&|' components/android_autofill/browser/android_autofill_manager.cc
+
+# net: ech toggle
+sed -i 's|^NET_EXPORT BASE_DECLARE_FEATURE(kHappyEyeballsV3);$|&\nNET_EXPORT BASE_DECLARE_FEATURE(kEncryptedClientHello);|' net/base/features.h
+sed -i 's|^BASE_FEATURE(kHappyEyeballsV3, base::FEATURE_DISABLED_BY_DEFAULT);$|&\nBASE_FEATURE(kEncryptedClientHello, base::FEATURE_ENABLED_BY_DEFAULT);|' net/base/features.cc
+sed -i 's|config->ech_enabled = ech_enabled_.GetValue();|config->ech_enabled = ech_enabled_.GetValue() \&\& base::FeatureList::IsEnabled(net::features::kEncryptedClientHello);|' chrome/browser/ssl/ssl_config_service_manager.cc
+
+# net: proxy + ech flags
+sed -i '/^inline constexpr char kHappyEyeballsV3Name\[\] = /i\
+inline constexpr char kEncryptedClientHelloName[] = "Encrypted Client Hello";\
+inline constexpr char kEncryptedClientHelloDescription[] =\
+    "Encrypts the TLS ClientHello, including the server name, for sites that "\
+    "publish ECH keys in DNS HTTPS records. The keys are only fetched by the "\
+    "built-in DNS resolver or Secure DNS, so when Android Private DNS is active "\
+    "Secure DNS must be set to a provider for ECH to be used.";\
+inline constexpr char kProxyServerName[] = "Proxy server";\
+inline constexpr char kProxyServerDescription[] =\
+    "Route browser traffic through a proxy, overriding the Android system "\
+    "proxy. Examples: http://host:port, https://host:port, socks4://host:port, "\
+    "socks5://host:port (SOCKS5 resolves hostnames on the proxy). Per-scheme "\
+    "rules are also accepted, e.g. http=host:port;https=host:port. Leave "\
+    "disabled to use the system proxy.";\
+inline constexpr char kProxyBypassListName[] = "Proxy bypass list";\
+inline constexpr char kProxyBypassListDescription[] =\
+    "Hosts to connect to directly while the proxy server flag is set, separated "\
+    "by semicolons or commas, e.g. *.lan;192.168.0.0/16. Loopback addresses "\
+    "always bypass the proxy unless <-loopback> is added.";
+' chrome/browser/flag_descriptions.h
+sed -i '/^     FEATURE_VALUE_TYPE(net::features::kHappyEyeballsV3)},$/a\
+    {"encrypted-client-hello", flag_descriptions::kEncryptedClientHelloName,\
+     flag_descriptions::kEncryptedClientHelloDescription, kOsAll,\
+     FEATURE_VALUE_TYPE(net::features::kEncryptedClientHello)},\
+    {"proxy-server", flag_descriptions::kProxyServerName,\
+     flag_descriptions::kProxyServerDescription, kOsAll,\
+     STRING_VALUE_TYPE(switches::kProxyServer, "")},\
+    {"proxy-bypass-list", flag_descriptions::kProxyBypassListName,\
+     flag_descriptions::kProxyBypassListDescription, kOsAll,\
+     STRING_VALUE_TYPE(switches::kProxyBypassList, "")},
+' chrome/browser/about_flags.cc
+sed -i '0,/^\[$/{/^\[$/a\
+  { "name": "encrypted-client-hello", "owners": [ "jqssun" ], "expiry_milestone": -1 },\
+  { "name": "proxy-bypass-list", "owners": [ "jqssun" ], "expiry_milestone": -1 },\
+  { "name": "proxy-server", "owners": [ "jqssun" ], "expiry_milestone": -1 },
+}' chrome/browser/flag-metadata.json
+
 export PATCHED=1
