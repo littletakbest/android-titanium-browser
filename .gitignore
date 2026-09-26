@@ -7,3 +7,8 @@ keys/
 
 *.aab
 *.apk
+*.jks
+local.properties
+# local signing material
+/key.jks
+/local.properties
